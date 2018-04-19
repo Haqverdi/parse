@@ -10,7 +10,10 @@ const mysql = require(`mysql`);
 var schedule = require('node-schedule');
 
 var con = mysql.createConnection({//bazaya connect
-
+    host     : '144.76.61.53',
+    user     : 'temalist',
+    password : 'luR7LkAwyA5u4OyQ8ZSl',
+    database : 'temalist'
 });
 con.connect(function(err) {
   if (err) throw err;

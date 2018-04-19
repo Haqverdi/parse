@@ -1,3 +1,4 @@
+//ilk defe (0-dan) parse ucun..
 const tress = require('tress');
 const needle = require('needle');
 const cheerio = require('cheerio');
@@ -9,7 +10,10 @@ const mysql = require(`mysql`);
 var schedule = require('node-schedule');
 
 var con = mysql.createConnection({//bazaya connect
-    
+    host     : '144.76.61.53',
+    user     : 'temalist',
+    password : 'luR7LkAwyA5u4OyQ8ZSl',
+    database : 'temalist'
 });
 con.connect(function(err) {
   if (err) throw err;
@@ -17,11 +21,10 @@ con.connect(function(err) {
 });
 let page = 2;
 //birinci parse edeciyimiz sehife
-var start_url = 'https://ofigenno.com/';
+var start_url = 'https://ofigenno.com';
 //sonuncu parse edeciyimiz sehife - 1
 var end_url = 'https://ofigenno.com/page-'+`${page}`;
 
-//mueyyen vaxt intervalinda yeni postlarin elave edilmesinin yoxlanilmasi
 var j = schedule.scheduleJob('0 * * * *', function(){
   console.log(new Date().toLocaleString());
 
@@ -32,13 +35,8 @@ let check = row.add_time; //en son elave edilmish melumatin elave edilme tarixi
 var w = tress(work); //parse olunmush bashliqlarin her birinin parse olunmasi ucun ardicil olaraq siraya qoyularaq parse olunmasi
 w.drain = done; //siraya qoyulmush postlar parse edildikden sonra edilecek ish
 var results = []; //parse olunmush postlara aid melumatlarin yazilmasi ucun massiv
-if (row.ID == undefined) {
-    var counter2 = (page - 1)*15; //en son parse olunmush ve bazaya yazilmish melumatin id-den bashlayaraq folder ve shekil adlarinin formalashdirilmasi ucun counter
-    var counter3 = (page - 1)*15;
-} else {
     counter2 = row.ID + 1;
     counter3 = row.ID + 1;
-}
 var headers = [];//bashliqlar uzre parse olunmush melumatlari bazaya yazilana qeder muveqqeti saxlamaq ucun array
 var checking = true;//en son melumatin tarixini yoxlanilmasi ucun check-er
 var q = tress(function(url, callback){
@@ -51,7 +49,7 @@ var q = tress(function(url, callback){
             if (check != undefined && added_time === check) {//parse edilen bashligin elave olunma tarixine gore en son saxladigimiz bashligdan sonra elave olundugunu yoxlamaq ucun
                 checking = false; //eger yeni info yoxdursa parse saxlamag ucun chekerin false edilmesi
                //eger yeni post yoxdursa bu barede consolda bildirish
-                console.log('After ' + added_time + ' no new posts to add');
+                console.log('After ' + added_time + ' no news to Add');
             }
             if (checking) {//eger parse olunan bashliq yenidirse siraya elave edilmesi
                 var thum_img = resolve(start_url, $(this).find('.post-thumb>a>img').attr('src'));//cover shekilinin yuklenilmesi ucun onun linki
@@ -98,13 +96,13 @@ var q = tress(function(url, callback){
                 headers.push({ //her bir bashliga aid melumatlarin headers massivinde bazaya yazilana qeder saxlanmasi ucun massive push edilmesi
                     header: thum_header,
                     desc: thum_desc,
-                    img_src: `./photo/${minlik}/${yuzluk}/${counter2}/cover.${thum_img.split('.').pop()}`,
+                    img_src: `/photo/${minlik}/${yuzluk}/${counter2}/cover.${thum_img.split('.').pop()}`,
                     category_id: thum_cat_id,
                     add_time: added_time
                 });
                 w.push(resolve(start_url, $(this).find('div.post-content>div.post-header>a').attr('href')));
             } // end cheking if
-            counter2--;       
+            counter2++;       
         });
             //parse edilen zaman novbeti bashliqlar sehifesinin parse edilmesi ucun siraya qoyulmasi 
             var next_url = resolve(start_url, $('.navi-right>a').attr('href'));
@@ -131,14 +129,16 @@ function work(post, cb){
         //posta shekillerin ve ya videonun hansi tip oldugunu mueyyen edilmesi ve emal olunmasi
         $('#article>div').each(function(z, elems){
             if ($(this).hasClass('instagram-media-box') || $('#article>div').hasClass('video')) {
-                $(this).html($.html($(this).find('iframe')));//eger iframe tegindedirse melumat
+                $(this).html($.html($(this).find('iframe')));
+                //eger iframe tegindedirse melumat
             } else if($(this).hasClass('photo')) {
                 //posta olan shekillerin linklerinin Download-la yuklenmesi ucun massive elave eidlmesi
                 img_url.push(resolve(start_url, $(this).find('img').attr('src')));
             }
         });
         if ($('#article>div').hasClass('ad intext')) {
-            $('#article>div.ad.intext>div.photo>img').each(function(e, elem){//eger shekilleri 'id intext' classli divin icindedirse onlarin img src-lerinin goturulmesi
+            //eger shekilleri 'id intext' classli divin icindedirse onlarin img src-lerinin goturulmesi
+            $('#article>div.ad.intext>div.photo>img').each(function(e, elem){
                 img_url.push(
                   resolve(start_url, $(this).attr('src'))
                 );
@@ -148,30 +148,37 @@ function work(post, cb){
         let yuzluk = parseInt(((counter3 / 100) + 1)) * 100;        
         let path = []; // postun html strukturanda img-lerin src-nin deyishdirilmesi ucun yuklenmsih shekillerin path-lari
         for (let r = 1; r <= img_url.length; r++) {
-            const element = `./photo/${minlik}/${yuzluk}/${counter3}/${r}.jpg`;
+            const element = `/photo/${minlik}/${yuzluk}/${counter3}/${r}.jpg`;
             path.push(element);
         }
-        Promise.all(img_url.map(x => download(x, `./photo/${minlik}/${yuzluk}/${counter3}`))).then(() => { //yuklenmeli olan shekillerin yuklenmesi
+        //yuklenmeli olan shekillerin yuklenmesi
+        Promise.all(img_url.map(x => download(x, `./photo/${minlik}/${yuzluk}/${counter3}`))).then(() => { 
             console.log(w.length() + ' items waiting to be processed');
           });
-        if ($('#article>div').hasClass('ad intext')) { //eger posta olan shekiller 'id intext' classli divin icinde olsa onlarin emal olunmasi
+          //eger posta olan shekiller 'id intext' classli divin icinde olsa onlarin emal olunmasi
+        if ($('#article>div').hasClass('ad intext')) { 
             $('#article>div.ad.intext>div.photo>img').each(function(e, elem){
                 $(this).attr('src', `${path[e]}`);
             });
         }
         $('#article>div.photo>img').each(function(t, elem){ //postun html-inde img-lerin src-nin yuklenmish shekillerin path-lari ile evez olunmasi
             $(this).attr('src', `${path[t]}`);
+            $(this).addClass('img-responsive');
         })
         if($('#article>div').hasClass('ad intext')){ //'ad intext' classli divlerin postun html strukturandan silinmesi
             $('#article>div.ad').remove();
         }
         //js ile bagli lazimsiz script ve funksiyalarin silinmesi
         $('#article>div.photo>div.image-rollover-wrap').remove();
-        $('#article>div.photo').removeAttr('onmouseover').removeAttr('onmouseout').attr('class', 'photo');
         $('#article>div.ad.intext>div.photo>div.image-rollover-wrap').remove();
-        $('#article>div.ad.intext>div.photo').removeAttr('onmouseover').removeAttr('onmouseout').attr('class', 'photo');
-        let nhtml = $('#article').html().replace(/\n/g, "").replace(/\t/g, "").replace(/\\/g, "").replace(/�/g, ""); // postun hazir html-i
-          results.push({//yazilmish her bir bashliq uzre ona aid melumatlarin results massivine yazilmasi
+        $('#article>div.ad.intext>div.photo').removeAttr('onmouseover').removeAttr('onmouseout').removeAttr('class');
+        $('#article>div.photo').removeAttr('onmouseover').removeAttr('onmouseout').removeAttr('class');
+        $('#article>div.clear').remove();
+        $('#article>h1').remove();
+        // postun hazir html-i
+        let nhtml = $('#article').html().replace(/\n/g, "").replace(/\t/g, "").replace(/\\/g, "").replace(/�/g, "").replace(/<div>/g, "<p>").replace(/<\/div>/g, "</p>");
+        //yazilmish her bir bashliq uzre ona aid melumatlarin results massivine yazilmasi
+          results.push({
             header: headers[counter4].header,//Title
             desc: headers[counter4].desc,//Decription
             img_src: headers[counter4].img_src,//cover image src
@@ -180,26 +187,26 @@ function work(post, cb){
             add_time: headers[counter4].add_time, // saytda olan elave olunma tarixi
             post: nhtml //postun hazir html-i
             });
-        counter3--;//her bir postun ona aid foldere shekilerrin yuklenmsi ucun komekci counter
+        counter3++;//her bir postun ona aid foldere shekilerrin yuklenmsi ucun komekci counter
         counter4++;//her bir bashliga aid melumatlarin headers massivinde goturulmesi ucun komekci counter
     cb();
     });
 }
 
 function done(){//parse edilmish melumatlarin results massivinden bazaya yazilmasi
-    //her bir posta aid cover shekilinin xeberin sayina uygun adinin deyishdirilmesi
-    for (let i = 1; i <= counter4; i++) {
-        let minlik = parseInt(((i / 1000) + 1)) * 1000;
-        let yuzluk = parseInt(((i / 100) + 1)) * 100;
-        fs.rename(`./photo/${minlik}/${yuzluk}/${i}/thumb.jpg`, `./photo/${minlik}/${yuzluk}/${i}/cover.jpg`, function(err) {
-            if ( err ) console.log('FS ERROR: ' + err);
-        });
-    }
     console.log('Done!');
+            //her bir posta aid cover shekilinin xeberin sayina uygun adinin deyishdirilmesi
+            for (let i = row.ID + 1; i <= counter3; i++) {
+                let minlik = parseInt(((i / 1000) + 1)) * 1000;
+                let yuzluk = parseInt(((i / 100) + 1)) * 100;
+                fs.rename(`./photo/${minlik}/${yuzluk}/${i}/thumb.jpg`, `./photo/${minlik}/${yuzluk}/${i}/cover.jpg`, function(err) {
+                    if ( err ) console.log('FS ERROR: ' + err);
+                });
+            }
     for (let i = results.length-1; i >= 0; i--) { // results massivinde olan melumatlarin her birinin axirdan bashlayaraq db-ya yazilmasi ucun for
         const elem = results[i];
-        var query = con.query('INSERT INTO `news2` (`title`, `desc`, `news_img`, `enabled`, `content`, `add_time`, `author`, `created_at`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-         [`${elem.header}`, `${elem.desc}`, `${elem.img_src}`, 0, `${elem.post}`, `${elem.add_time}`, `node_parser`, `CURRENT_TIMESTAMP()`], function (err, result) {//yuxarida hazirlanmish SQL sorgunun bazaya yonlendirilmesi
+        var query = con.query('INSERT INTO `news2` (`title`, `desc`, `news_img`, `enabled`, `content`, `add_time`, `news_date`, `author`, `created_at`, `fb_desc`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+         [`${elem.header}`, `${elem.desc}`, `${elem.img_src}`, 0, `${elem.post}`, `${elem.add_time}`, `CURRENT_TIMESTAMP`, `node_parser`, `CURRENT_TIMESTAMP`, `${elem.desc}`], function (err, result) {//yuxarida hazirlanmish SQL sorgunun bazaya yonlendirilmesi
           if (elem.category_id.length > 1) { //categoriyanin 1-den cox olub olmamasinin yoxlanilmasi
             elem.category_id.forEach(element => {//eger categoriya 1-den coxdursa her birinin bazaya yazilmasi ucun for each
                 con.query('INSERT INTO news_to_category2 (news_id, 	category_id) VALUES (?,?)', [`${result.insertId}`, `${element}`]);
