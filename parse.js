@@ -25,7 +25,7 @@ var start_url = 'https://ofigenno.com/';
 var end_url = 'https://ofigenno.com/page-'+`${page}`;
 
 //mueyyen vaxt intervalinda yeni postlarin elave edilmesinin yoxlanilmasi
-var j = schedule.scheduleJob('*/10 * * * *', function(){
+var j = schedule.scheduleJob('0 * * * *', function(){
   console.log(new Date().toLocaleString());
 
 let query = con.query('SELECT `ID`,`add_time` FROM `news2` order by ID desc limit 1'); //en son elave edilmish melumatin ID ve elave edilme tarixini aliriq
