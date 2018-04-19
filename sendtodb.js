@@ -1,9 +1,9 @@
 //Parse olunmush melumatlari Json-dan bazaya yuklemek ucun konsolda 'node sendtodb.js' yazmaginiz kifayetdir.
-var mysql = require(`mysql`);
-var jsonfile = require(`jsonfile`)
-var file = `./data.json`;
+let mysql = require(`mysql`);
+let jsonfile = require(`jsonfile`)
+let file = `./data.json`;
 
-var con = mysql.createConnection({
+let con = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
@@ -15,10 +15,10 @@ con.connect(function(err) {
 });
 
 jsonfile.readFile(file, function(err, results) {
-  var c = 1;
-  for (var i = 0; i < results.length; i++) {
-  var textp  = results[i].text.toString();
-  var new_text = textp.replace(/'/g, "-");
+  let c = 1;
+  for (let i = 0; i < results.length; i++) {
+  let textp  = results[i].text.toString();
+  let new_text = textp.replace(/'/g, "-");
   sql = "INSERT INTO `news` (`ID`, `Title`, `Text`, `Url`, `Images`) VALUES (NULL, " + "'" + results[i].title + "', '" + new_text + "', '" + results[i].href + "', '" + results[i].img_urls + "');"
   con.query(sql, function (err, result) {
   if (err) throw err;
