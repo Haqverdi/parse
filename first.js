@@ -21,7 +21,7 @@ con.connect(function(err) {
 });
 let page = 20;
 //birinci parse edeciyimiz sehife
-var start_url = 'https://ofigenno.com/';
+var start_url = 'https://ofigenno.com';
 //sonuncu parse edeciyimiz sehife - 1
 var end_url = 'https://ofigenno.com/page-'+`${page}`;
 
