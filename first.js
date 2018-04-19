@@ -19,7 +19,7 @@ con.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");//db-ye qoshulma haqqinda bildirish
 });
-let page = 2;
+let page = 20;
 //birinci parse edeciyimiz sehife
 var start_url = 'https://ofigenno.com/';
 //sonuncu parse edeciyimiz sehife - 1
