@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Haqverdi Behbudov",
   "license": "ISC",
   "dependencies": {
     "agenda": "^1.0.3",
